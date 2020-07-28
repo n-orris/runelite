@@ -8,20 +8,17 @@ import net.runelite.client.config.ConfigItem;
 public interface XpOverlayConfig extends Config {
 
     @ConfigItem(
-            keyName = "nickname",
-            name = "Xp Overlay",
-            description = "An overlay that displays skill Xp",
-            position = 1
-    )
-    default String nickname() { return "bob"; }
-
-    @ConfigItem(
             keyName = "goalLevel",
             name = "Goal Level",
-            description = "The user's goal level",
-            position = 2
+            description = "The user's goal level"
     )
     default int goalLevel() { return 99; }
 
+    @ConfigItem(
+            keyName = "skills",
+            name = "Choose Skill",
+            description = "Choose which skill you want to display"
+    )
+    default String skills() {return "";}
 
 }

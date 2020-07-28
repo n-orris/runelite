@@ -22,6 +22,9 @@ public class XpOverlay extends Overlay {
         this.plugin = plugin;
     }
 
+    @Inject
+    private XpOverlayConfig config;
+
 
     @Override
     public Dimension render(Graphics2D graphics) {
@@ -29,8 +32,8 @@ public class XpOverlay extends Overlay {
         panelComponent.getChildren().clear();
 
         panelComponent.getChildren().add(LineComponent.builder()
-        .left("Skill Level")
-        .right(Integer.toString(plugin.getSkillLevel()))
+        .left(config.skills().toUpperCase())
+        .right(Integer.toString(plugin.getSkillExperience()))
         .build());
 
         return panelComponent.render(graphics);

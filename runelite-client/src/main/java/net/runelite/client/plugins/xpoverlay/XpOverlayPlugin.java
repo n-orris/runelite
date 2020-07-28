@@ -4,6 +4,7 @@ import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
+import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -37,30 +38,31 @@ public class XpOverlayPlugin extends Plugin {
     private XpOverlayConfig config;
 
     @Provides
-    XpOverlayConfig getConfig(ConfigManager configManager) {
+    XpOverlayConfig getConfig(ConfigManager configManager)
+    {
         return configManager.getConfig(XpOverlayConfig.class);
     }
 
     @Subscribe
-    public void onConfigChanged(ConfigChanged event) {
-        System.out.println("Welcome, " + config.nickname());
+    public void onConfigChanged(ConfigChanged event)
+    {
         System.out.println("Good luck on your goal level of "+ config.goalLevel());
     }
 
     @Override
-    public void startUp() {
+    public void startUp()
+    {
         overlayManager.add(xpOverlay);
     }
 
     @Override
-    public void shutDown() {
+    public void shutDown()
+    {
         overlayManager.remove(xpOverlay);
     }
 
-    public int getSkillLevel() {
-        return client.getRealSkillLevel(Skill.COOKING);
+
+    public int getSkillExperience() {
+        return client.getSkillExperience(Skill.valueOf(config.skills().toUpperCase()));
     }
-
-
-
 }
