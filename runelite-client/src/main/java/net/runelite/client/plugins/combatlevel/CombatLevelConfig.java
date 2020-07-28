@@ -60,4 +60,18 @@ public interface CombatLevelConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+			keyName = "playSound",
+			name = "Play sound",
+			description = "plays sound when attackable pker is near"
+	)
+	default boolean playSound() { return false; }
+
+	@ConfigItem(
+			keyName = "textMessage",
+			name = "Pker chat message",
+			description = "displays name and cb lvl of attackable pkers"
+	)
+	default boolean textMessage() {return false; }
 }

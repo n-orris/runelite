@@ -24,18 +24,24 @@
  */
 package net.runelite.client.plugins.blastfurnace;
 
-import java.awt.Dimension;
-import java.awt.Graphics2D;
+import java.awt.*;
+import java.util.Arrays;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import static net.runelite.api.MenuAction.RUNELITE_OVERLAY_CONFIG;
 import static net.runelite.api.Varbits.BLAST_FURNACE_COFFER;
+
+import net.runelite.api.InventoryID;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.ItemID;
+import net.runelite.api.kit.KitType;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import static net.runelite.client.ui.overlay.OverlayManager.OPTION_CONFIGURE;
 import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.components.ComponentConstants;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.util.QuantityFormatter;
 import static org.apache.commons.lang3.time.DurationFormatUtils.formatDuration;
@@ -80,14 +86,35 @@ class BlastFurnaceCofferOverlay extends OverlayPanel
 				.right(QuantityFormatter.quantityToStackSize(coffer) + " gp")
 				.build());
 
-			if (config.showCofferTime())
+			panelComponent.getChildren().add(LineComponent.builder()
+					.left("Glove:")
+					.right(QuantityFormatter.quantityToStackSize(coffer) + " gp")
+					.build());
+
+			int goldBars = client.getVar(BarsOres.GOLD_BAR.getVarbit());
+			boolean goldGloves = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.HANDS) == ItemID.GOLDSMITH_GAUNTLETS;
+
+			ItemContainer inventory = client.getItemContainer(InventoryID.INVENTORY);
+			boolean hasGoldOre = inventory != null && Arrays.stream(inventory.getItems()).anyMatch(i -> i.getId() == ItemID.GOLD_ORE);
+
+			if (goldBars > 0 && goldGloves)
 			{
-				final long millis = (long) (coffer / COST_PER_HOUR * 60 * 60 * 1000);
 
 				panelComponent.getChildren().add(LineComponent.builder()
-					.left("Time:")
-					.right(formatDuration(millis, "H'h' m'm' s's'", true))
+					.left("Glove:")
+					.right("Ice")
 					.build());
+			}
+			else if (hasGoldOre && !goldGloves) {
+				panelComponent.setBackgroundColor(new Color(255,233,0));
+				panelComponent.getChildren().add(LineComponent.builder()
+						.left("Glove:")
+						.right("Gold")
+						.build());
+
+			}
+			else {
+				panelComponent.setBackgroundColor(ComponentConstants.STANDARD_BACKGROUND_COLOR);
 			}
 		}
 

@@ -27,20 +27,23 @@ package net.runelite.client.plugins.combatlevel;
 
 import com.google.inject.Provides;
 import java.text.DecimalFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
-import net.runelite.api.Client;
-import net.runelite.api.Experience;
-import net.runelite.api.GameState;
-import net.runelite.api.ScriptID;
-import net.runelite.api.Skill;
-import net.runelite.api.WorldType;
+
+import net.runelite.api.*;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.PlayerSpawned;
 import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -81,6 +84,9 @@ public class CombatLevelPlugin extends Plugin
 	@Inject
 	private OverlayManager overlayManager;
 
+	@Inject
+	private ChatMessageManager chatMessageManager;
+
 	@Provides
 	CombatLevelConfig provideConfig(ConfigManager configManager)
 	{
@@ -96,6 +102,7 @@ public class CombatLevelPlugin extends Plugin
 		{
 			appendAttackLevelRangeText();
 		}
+		lastPinged = Instant.now();
 	}
 
 	@Override
@@ -142,6 +149,56 @@ public class CombatLevelPlugin extends Plugin
 		);
 
 		combatLevelWidget.setText("Combat Lvl: " + DECIMAL_FORMAT.format(combatLevelPrecise));
+	}
+	private Instant lastPinged;
+	private Duration waitDuration = Duration.ofMillis(5000);
+
+	@Subscribe
+	public void onPlayerSpawned(PlayerSpawned event) {
+
+		if (client.getGameState() != GameState.LOGGED_IN) {
+			return;
+		}
+
+		Player player = event.getPlayer();
+
+		// In Wilderness?
+		final Widget wildernessLevelWidget = client.getWidget(WidgetInfo.PVP_WILDERNESS_LEVEL);
+		if (wildernessLevelWidget == null) {
+			return;
+		}
+
+		// Player spawned can attack?
+		if (player.getCombatLevel() >= lower && player.getCombatLevel() <= upper) {
+			// if true sends message with name + cb lvl to chat box
+			if (config.textMessage())
+			{
+				sendChatMessage("Pker " + player.getName() + " " + player.getCombatLevel());
+			}
+			// if true plays bell sounds
+			if (lastPinged != null && Instant.now().compareTo(lastPinged.plus(waitDuration)) >= 0 && config.playSound())
+			{
+				client.playSoundEffect(SoundEffectID.TOWN_CRIER_BELL_DING, SoundEffectVolume.HIGH);
+				lastPinged = Instant.now();
+
+			}
+
+
+		}
+	}
+	private void sendChatMessage(String chatMessage)
+	{
+		final String message = new ChatMessageBuilder()
+				.append(ChatColorType.HIGHLIGHT)
+				.append(chatMessage)
+				.build();
+
+		chatMessageManager.queue(
+				QueuedMessage.builder()
+						.type(ChatMessageType.CONSOLE)
+						.runeLiteFormattedMessage(message)
+						.build());
+
 	}
 
 	@Subscribe
@@ -237,8 +294,13 @@ public class CombatLevelPlugin extends Plugin
 		originalSkullContainerPosition = -1;
 	}
 
-	private static String combatAttackRange(final int combatLevel, final int wildernessLevel)
+	private int lower = -1;
+	private int upper = -1;
+
+	private String combatAttackRange(final int combatLevel, final int wildernessLevel)
 	{
+		lower = Math.max(MIN_COMBAT_LEVEL, combatLevel - wildernessLevel);
+		upper = Math.min(Experience.MAX_COMBAT_LEVEL, combatLevel + wildernessLevel);
 		return Math.max(MIN_COMBAT_LEVEL, combatLevel - wildernessLevel) + "-" + Math.min(Experience.MAX_COMBAT_LEVEL, combatLevel + wildernessLevel);
 	}
 }

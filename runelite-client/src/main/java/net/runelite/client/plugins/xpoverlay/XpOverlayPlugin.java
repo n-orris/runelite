@@ -1,8 +1,12 @@
 package net.runelite.client.plugins.xpoverlay;
 
+import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Skill;
+import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -28,6 +32,20 @@ public class XpOverlayPlugin extends Plugin {
 
     @Inject
     private XpOverlay xpOverlay;
+
+    @Inject
+    private XpOverlayConfig config;
+
+    @Provides
+    XpOverlayConfig getConfig(ConfigManager configManager) {
+        return configManager.getConfig(XpOverlayConfig.class);
+    }
+
+    @Subscribe
+    public void onConfigChanged(ConfigChanged event) {
+        System.out.println("Welcome, " + config.nickname());
+        System.out.println("Good luck on your goal level of "+ config.goalLevel());
+    }
 
     @Override
     public void startUp() {
